@@ -16,8 +16,9 @@ const startQueueSim = async () => {
 
         setInterval(async () => {
             const services = [
-                { type: 'stall', id: 'Snacks Stall B' },
-                { type: 'stall', id: 'Merch Store' }
+                { type: 'stall', id: 'stall:12' },
+                { type: 'stall', id: 'stall:15' },
+                { type: 'restroom', id: 'restroom:3' }
             ];
             const service = services[Math.floor(Math.random() * services.length)];
             const waitTime = Math.floor(Math.random() * 20 * 60 * 1000); // 0-20 min

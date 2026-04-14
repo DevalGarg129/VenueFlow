@@ -18,7 +18,7 @@ const startCrowdSim = async () => {
     await kafka.connectProducer();
 
     setInterval(async () => {
-      const stands = ['North', 'South', 'Pavilion'];
+      const stands = ['stand:North', 'stand:South', 'stand:Pavilion', 'stand:VIP East'];
       const standId = stands[Math.floor(Math.random() * stands.length)];
       const density = Math.floor(Math.random() * 10000);
 
