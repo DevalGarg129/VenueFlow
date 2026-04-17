@@ -19,7 +19,7 @@ setInterval(async () => {
     } catch(err) {}
 }, 5000); // Emits a mock event every 5 seconds
 
-const PORT = process.env.PORT || process.env.MATCH_SERVICE_PORT || 4004;
+const PORT = process.env.MATCH_SERVICE_PORT || process.env.PORT || 4004;
 app.listen(PORT, () => {
   console.log(`[Match Service] listening on port ${PORT}`);
 });

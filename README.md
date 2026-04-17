@@ -21,8 +21,7 @@ ArenaPulse is a comprehensive, microservices-based full-stack application design
 
 ### Infrastructure & Databases
 - **MongoDB**: Primary NoSQL database for persistent data storage.
-- **Redis**: In-memory data store for state-management, caching, and accelerating real-time operations.
-- **Apache Kafka & Zookeeper**: Distributed event streaming platform used to reliably decouple communication and transfer high-throughput data between microservices.
+- **Redis**: In-memory data store for state-management, caching, and as a primary messaging broker for real-time operations across services (replacing Kafka).
 - **Docker & Docker Compose**: Used collectively to containerize and orchestrate the entire development environment securely.
 
 ## 📂 Project Structure
@@ -37,7 +36,7 @@ ArenaPulse/
 │   ├── notification-service/
 │   ├── queue-service/
 │   └── user-service/
-├── shared/                 # Shared utilities (e.g., Kafka connect logic)
+├── shared/                 # Shared utilities (e.g., Redis connect logic)
 ├── infra/                  # Infrastructure configurations
 ├── tests/                  # Centralized test directory
 ├── docker-compose.yml      # Container orchestration
@@ -74,7 +73,7 @@ Make sure you have the following installed on your machine:
    ```
 
 4. **Spin up the Infrastructure**:
-   Start up all the services, databases, and message brokers via Docker Compose.
+   Start up all the services and databases via Docker Compose.
    ```bash
    docker-compose up -d
    ```
@@ -85,8 +84,6 @@ Make sure you have the following installed on your machine:
 - **Notification Service (WebSockets)**: `5000`
 - **MongoDB**: `27018`
 - **Redis**: `6379`
-- **Kafka**: `9092`
-- **Zookeeper**: `2181`
 
 ## 👨‍💻 Development
 
