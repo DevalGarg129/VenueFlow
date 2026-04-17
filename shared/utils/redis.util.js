@@ -22,7 +22,9 @@ const createRedisClient = () => {
 
   if (process.env.REDIS_PASSWORD) {
     redisConfig.password = process.env.REDIS_PASSWORD;
-    console.log('[Redis] Configured with password authentication');
+    // Cloud providers like Upstash often require TLS
+    redisConfig.tls = {}; 
+    console.log('[Redis] Configured with password and TLS');
   }
 
   const redis = new Redis(redisConfig);
@@ -30,7 +32,7 @@ const createRedisClient = () => {
   // Handle errors immediately to prevent "Unhandled error event"
   redis.on('error', (err) => {
     if (err.code === 'ECONNREFUSED') {
-      console.warn(`[Redis] Connection refused on ${host}:${process.env.REDIS_PORT || 6379}. Check if Redis is running.`);
+      console.warn(`[Redis] Connection refused on ${host}:${process.env.REDIS_PORT || 6379}.`);
     } else {
       console.error('[Redis] Error:', err.message);
     }

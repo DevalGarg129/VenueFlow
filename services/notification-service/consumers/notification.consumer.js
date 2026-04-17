@@ -1,19 +1,41 @@
 const notificationService = require('../services/notification.service');
+const createRedisClient = require('../../../shared/utils/redis.util');
 
 exports.startConsumer = async () => {
   try {
-    const KafkaClient = require('../../../shared/utils/kafka.util');
-    const kafkaClient = new KafkaClient('notification-service');
+    console.log('[Notification Service] Initializing Redis Subscriber...');
+    const subscriber = createRedisClient();
 
-    await kafkaClient.connectConsumer(
-      'notification-group',
-      ['crowd_updates', 'queue_updates', 'match_events', 'alerts'],
-      async (topic, message) => {
-        console.log(`[Notification Service] Received on ${topic}`);
-        notificationService.processAndBroadcast(topic, message);
+    // Subscribe to relevant channels
+    const channels = ['crowd_updates', 'queue_updates', 'match-events', 'alerts'];
+    await subscriber.subscribe(...channels);
+
+    console.log(`[Notification Service] Redis Subscriber connected and listening on: ${channels.join(', ')}`);
+
+    subscriber.on('message', (channel, message) => {
+      console.log(`[Notification Service] Received message on channel: ${channel}`);
+      
+      try {
+        const data = JSON.parse(message);
+        
+        // Specific requirement: match-events -> match-update
+        if (channel === 'match-events') {
+          const { broadcastEvent } = require('../sockets/notification.socket');
+          broadcastEvent('match-update', data);
+        } else {
+          // Other channels follow existing logic
+          notificationService.processAndBroadcast(channel, data);
+        }
+      } catch (err) {
+        console.error(`[Notification Service] Failed to process Redis message on ${channel}:`, err.message);
       }
-    );
+    });
+
+    subscriber.on('error', (err) => {
+      console.error('[Notification Service] Redis Subscriber Error:', err.message);
+    });
+
   } catch (e) {
-    console.log('[Notification Service] Working without Kafka attached. Error: ', e.message);
+    console.error('[Notification Service] Failed to start Redis Subscriber:', e.message);
   }
 };
