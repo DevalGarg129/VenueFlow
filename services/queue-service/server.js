@@ -1,4 +1,5 @@
 const app = require('./app');
+require('dotenv').config({ path: '../../.env' });
 
 let kafkaClient;
 try {

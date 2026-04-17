@@ -1,4 +1,5 @@
 const app = require('./app');
+require('dotenv').config({ path: '../../.env' });
 const matchService = require('./services/match.service');
 
 // Mock simulation engine: occasionally fire events automatically

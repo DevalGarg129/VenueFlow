@@ -9,7 +9,7 @@ try {
   redisClient.on('error', (err) => console.error('[Queue Service] Redis Error:', err.message));
 }
 
-const { publishQueueUpdate } = require('../producers/queue.producer');
+// const { publishQueueUpdate } = require('../producers/queue.producer');
 
 exports.updateQueue = async (serviceType, serviceId, addedTimeMs, resolvedTimeMs) => {
   const key = `queue:${serviceType}:${serviceId}`;
@@ -20,12 +20,12 @@ exports.updateQueue = async (serviceType, serviceId, addedTimeMs, resolvedTimeMs
 
   await redisClient.set(key, currentWait);
 
-  await publishQueueUpdate('queue_updates', {
+  await redisClient.publish('queue_updates', JSON.stringify({
     serviceType,
     serviceId,
     estimatedWaitMs: currentWait,
     timestamp: new Date().toISOString()
-  });
+  }));
 
   return currentWait;
 };

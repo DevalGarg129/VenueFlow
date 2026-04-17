@@ -1,4 +1,5 @@
 const express = require('express');
+require('dotenv').config({ path: '../../.env' });
 const http = require('http');
 const { Server } = require('socket.io');
 const { initializeSockets } = require('./sockets/notification.socket');

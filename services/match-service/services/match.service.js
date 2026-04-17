@@ -1,4 +1,6 @@
-const { publishMatchEvent } = require('../producers/match.producer');
+const createRedisClient = require('../../../shared/utils/redis.util');
+const redisClient = createRedisClient();
+// const { publishMatchEvent } = require('../producers/match.producer');
 
 exports.processEvent = async (type, player, detail, time) => {
   if (!type) throw new Error('Event type required');
@@ -12,6 +14,6 @@ exports.processEvent = async (type, player, detail, time) => {
     timestamp: new Date().toISOString()
   };
 
-  await publishMatchEvent(eventPayload);
+  await redisClient.publish('match-events', JSON.stringify(eventPayload));
   return eventPayload;
 };
