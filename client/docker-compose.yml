@@ -1,0 +1,116 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - redis
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - mongodb
+      - redis
+
+  crowd-service:
+    build:
+      context: .
+      dockerfile: services/crowd-service/Dockerfile
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - mongodb
+      - redis
+      - kafka
+
+  queue-service:
+    build:
+      context: .
+      dockerfile: services/queue-service/Dockerfile
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - mongodb
+      - redis
+      - kafka
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    ports:
+      - "5000:5000" # WebSocket port for frontend
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - redis
+      - kafka
+
+  match-service:
+    build:
+      context: .
+      dockerfile: services/match-service/Dockerfile
+    env_file: .env
+    environment:
+      DOCKER_ENV: "true"
+    depends_on:
+      - kafka
+
+  client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  mongodb_data:

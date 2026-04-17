@@ -1,0 +1,102 @@
+services:
+  # 1. API Gateway (Public Web Service)
+  - type: web
+    name: arena-pulse-gateway
+    env: docker
+    dockerContext: .
+    dockerfilePath: gateway/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - key: GATEWAY_PORT
+        value: 8080
+      - key: USER_SERVICE_URL
+        value: http://user-service:4001
+      - key: CROWD_SERVICE_URL
+        value: http://crowd-service:4002
+      - key: QUEUE_SERVICE_URL
+        value: http://queue-service:4003
+      - key: MATCH_SERVICE_URL
+        value: http://match-service:4004
+      - fromGroup: arena-pulse-infra-secrets
+
+  # 2. Notification Service (Public Web Service for WebSockets)
+  - type: web
+    name: notification-service
+    env: docker
+    dockerContext: .
+    dockerfilePath: services/notification-service/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - key: PORT
+        value: 5000
+      - fromGroup: arena-pulse-infra-secrets
+
+  # 3. User Service (Private Service)
+  - type: pserv
+    name: user-service
+    env: docker
+    dockerContext: .
+    dockerfilePath: services/user-service/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - fromGroup: arena-pulse-infra-secrets
+
+  # 4. Match Service (Private Service)
+  - type: pserv
+    name: match-service
+    env: docker
+    dockerContext: .
+    dockerfilePath: services/match-service/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - fromGroup: arena-pulse-infra-secrets
+
+  # 5. Crowd Service (Private Service)
+  - type: pserv
+    name: crowd-service
+    env: docker
+    dockerContext: .
+    dockerfilePath: services/crowd-service/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - fromGroup: arena-pulse-infra-secrets
+
+  # 6. Queue Service (Private Service)
+  - type: pserv
+    name: queue-service
+    env: docker
+    dockerContext: .
+    dockerfilePath: services/queue-service/Dockerfile
+    plan: free
+    envVars:
+      - key: DOCKER_ENV
+        value: "true"
+      - fromGroup: arena-pulse-infra-secrets
+
+envVarGroups:
+  - name: arena-pulse-infra-secrets
+    envVars:
+      - key: REDIS_HOST
+        sync: false # User to input manually on Render
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: KAFKA_BROKERS
+        sync: false
+      - key: KAFKA_USERNAME
+        sync: false
+      - key: KAFKA_PASSWORD
+        sync: false
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
