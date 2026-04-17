@@ -39,7 +39,7 @@ const startQueueSim = async () => {
 };
 startQueueSim();
 
-const PORT = process.env.QUEUE_SERVICE_PORT || 4003;
+const PORT = process.env.PORT || process.env.QUEUE_SERVICE_PORT || 4003;
 
 app.listen(PORT, () => {
   console.log(`[Queue Service] listening on port ${PORT}`);

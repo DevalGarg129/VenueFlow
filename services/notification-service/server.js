@@ -17,7 +17,7 @@ const io = new Server(server, {
 initializeSockets(io);
 startConsumer();
 
-const PORT = process.env.WS_PORT || 5000;
+const PORT = process.env.PORT || process.env.WS_PORT || 5000;
 server.listen(PORT, () => {
   console.log(`[Notification Service] WebSocket running on port ${PORT}`);
 });

@@ -10,7 +10,7 @@ const createRedisClient = () => {
     console.log('[Redis] Running outside Docker, falling back to localhost');
   }
 
-  const redis = new Redis({
+  const redisConfig = {
     host,
     port: process.env.REDIS_PORT || 6379,
     lazyConnect: true, // Don't crash immediately
@@ -18,7 +18,14 @@ const createRedisClient = () => {
       if (times > 10) return null; // Stop retrying after 10 attempts
       return Math.min(times * 100, 3000);
     }
-  });
+  };
+
+  if (process.env.REDIS_PASSWORD) {
+    redisConfig.password = process.env.REDIS_PASSWORD;
+    console.log('[Redis] Configured with password authentication');
+  }
+
+  const redis = new Redis(redisConfig);
 
   // Handle errors immediately to prevent "Unhandled error event"
   redis.on('error', (err) => {

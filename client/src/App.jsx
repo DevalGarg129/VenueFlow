@@ -44,7 +44,7 @@ function useLiveDashboardSocket() {
 
   useEffect(() => {
     // Connect to the notification-service WebSocket Gateway
-    const socket = io("http://localhost:5000", {
+    const socket = io(import.meta.env.VITE_NOTIFICATION_SERVICE_URL || "http://localhost:5000", {
         reconnectionDelayMax: 10000,
     });
 

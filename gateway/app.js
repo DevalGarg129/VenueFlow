@@ -37,7 +37,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Gateway is healthy' });
 });
 
-const PORT = process.env.GATEWAY_PORT || 8080;
+const PORT = process.env.PORT || process.env.GATEWAY_PORT || 8080;
 
 app.listen(PORT, () => {
   console.log(`[Gateway] running on port ${PORT}`);

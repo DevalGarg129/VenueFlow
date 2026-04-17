@@ -12,14 +12,27 @@ class KafkaClient {
       console.log('[Kafka] Running outside Docker, falling back to localhost:9092');
     }
 
-    this.kafka = new Kafka({
+    const kafkaConfig = {
       clientId: clientId,
       brokers: rawBrokers.split(','),
       retry: {
         initialRetryTime: 300,
         retries: 5
       }
-    });
+    };
+
+    // Add SASL and SSL for cloud providers if credentials exist
+    if (process.env.KAFKA_USERNAME && process.env.KAFKA_PASSWORD) {
+      kafkaConfig.ssl = true;
+      kafkaConfig.sasl = {
+        mechanism: 'scram-sha-256',
+        username: process.env.KAFKA_USERNAME,
+        password: process.env.KAFKA_PASSWORD
+      };
+      console.log(`[Kafka] ${clientId} configured with SASL/SSL`);
+    }
+
+    this.kafka = new Kafka(kafkaConfig);
     this.producer = this.kafka.producer({
       createPartitioner: Partitioners.LegacyPartitioner
     });

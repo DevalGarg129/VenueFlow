@@ -40,7 +40,7 @@ const startCrowdSim = async () => {
 };
 startCrowdSim();
 
-const PORT = process.env.CROWD_SERVICE_PORT || 4002;
+const PORT = process.env.PORT || process.env.CROWD_SERVICE_PORT || 4002;
 
 app.listen(PORT, () => {
   console.log(`[Crowd Service] listening on port ${PORT}`);
