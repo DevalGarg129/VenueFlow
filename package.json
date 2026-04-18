@@ -19,6 +19,7 @@
     "prettier": "^2.8.7"
   },
   "dependencies": {
-    "ioredis": "^5.10.1"
+    "ioredis": "^5.10.1",
+    "kafkajs": "^2.2.4"
   }
 }

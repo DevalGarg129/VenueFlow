@@ -19,7 +19,26 @@ setInterval(async () => {
     } catch(err) {}
 }, 5000); // Emits a mock event every 5 seconds
 
+const { disconnectAll } = require('../../shared/utils/kafka.util');
+
 const PORT = process.env.MATCH_SERVICE_PORT || process.env.PORT || 4004;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[Match Service] listening on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('[Match Service] SIGTERM received. Shutting down...');
+  await disconnectAll();
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', async () => {
+  console.log('[Match Service] SIGINT received. Shutting down...');
+  await disconnectAll();
+  server.close(() => {
+    process.exit(0);
+  });
 });

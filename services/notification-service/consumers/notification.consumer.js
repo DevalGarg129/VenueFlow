@@ -1,41 +1,34 @@
 const notificationService = require('../services/notification.service');
-const createRedisClient = require('../../../shared/utils/redis.util');
+const { getConsumer, ensureTopics } = require('../../../shared/utils/kafka.util');
 
 exports.startConsumer = async () => {
   try {
-    console.log('[Notification Service] Initializing Redis Subscriber...');
-    const subscriber = createRedisClient();
+    console.log('[Notification Service] Initializing Kafka Consumer...');
+    
+    const topics = ['crowd_updates', 'queue_updates', 'match_events', 'alerts'];
+    await ensureTopics(topics);
 
-    // Subscribe to relevant channels
-    const channels = ['crowd_updates', 'queue_updates', 'match-events', 'alerts'];
-    await subscriber.subscribe(...channels);
+    const consumer = await getConsumer('notification-group');
+    await consumer.subscribe({ topics, fromBeginning: false });
 
-    console.log(`[Notification Service] Redis Subscriber connected and listening on: ${channels.join(', ')}`);
+    console.log(`[Notification Service] Kafka Consumer connected and listening on: ${topics.join(', ')}`);
 
-    subscriber.on('message', (channel, message) => {
-      console.log(`[Notification Service] Received message on channel: ${channel}`);
-      
-      try {
-        const data = JSON.parse(message);
+    await consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        const payload = message.value.toString();
+        console.log(`[Notification Service] Received message from Kafka topic: ${topic}`);
         
-        // Specific requirement: match-events -> match-update
-        if (channel === 'match-events') {
-          const { broadcastEvent } = require('../sockets/notification.socket');
-          broadcastEvent('match-update', data);
-        } else {
-          // Other channels follow existing logic
-          notificationService.processAndBroadcast(channel, data);
+        try {
+          const data = JSON.parse(payload);
+          // Use the topic name as the channel for broadcasting
+          notificationService.processAndBroadcast(topic, data);
+        } catch (err) {
+          console.error(`[Notification Service] Failed to process Kafka message on ${topic}:`, err.message);
         }
-      } catch (err) {
-        console.error(`[Notification Service] Failed to process Redis message on ${channel}:`, err.message);
-      }
-    });
-
-    subscriber.on('error', (err) => {
-      console.error('[Notification Service] Redis Subscriber Error:', err.message);
+      },
     });
 
   } catch (e) {
-    console.error('[Notification Service] Failed to start Redis Subscriber:', e.message);
+    console.error('[Notification Service] Failed to start Kafka Consumer:', e.message);
   }
 };

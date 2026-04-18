@@ -1,6 +1,7 @@
-const createRedisClient = require('../../../shared/utils/redis.util');
-const redisClient = createRedisClient();
-// const { publishMatchEvent } = require('../producers/match.producer');
+const { getProducer, ensureTopics } = require('../../../shared/utils/kafka.util');
+
+// Ensure the topic exists
+ensureTopics(['match_events']);
 
 exports.processEvent = async (type, player, detail, time) => {
   if (!type) throw new Error('Event type required');
@@ -14,6 +15,18 @@ exports.processEvent = async (type, player, detail, time) => {
     timestamp: new Date().toISOString()
   };
 
-  await redisClient.publish('match-events', JSON.stringify(eventPayload));
+  try {
+    const producer = await getProducer();
+    await producer.send({
+      topic: 'match_events',
+      messages: [
+        { value: JSON.stringify(eventPayload) }
+      ],
+    });
+    console.log(`[Match Service] Event published to Kafka: ${type}`);
+  } catch (err) {
+    console.error('[Match Service] Failed to publish match event to Kafka:', err.message);
+  }
+
   return eventPayload;
 };

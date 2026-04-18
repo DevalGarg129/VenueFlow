@@ -33,12 +33,35 @@ Object.keys(proxies).forEach(route => {
   }));
 });
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'Gateway is healthy' });
+const { healthCheck } = require('../shared/utils/kafka.util');
+
+app.get('/health', async (req, res) => {
+  const kafkaStatus = await healthCheck();
+  res.status(200).json({ 
+    status: 'Gateway is healthy',
+    kafka: kafkaStatus
+  });
 });
 
 const PORT = process.env.GATEWAY_PORT || process.env.PORT || 8080;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[Gateway] running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('[Gateway] SIGTERM received. Shutting down...');
+  await disconnectAll();
+  server.close(() => {
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', async () => {
+  console.log('[Gateway] SIGINT received. Shutting down...');
+  await disconnectAll();
+  server.close(() => {
+    process.exit(0);
+  });
 });

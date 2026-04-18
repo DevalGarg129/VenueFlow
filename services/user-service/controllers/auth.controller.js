@@ -1,5 +1,9 @@
 const authService = require('../services/auth.service');
 const Joi = require('joi');
+const { getProducer, ensureTopics } = require('../../../shared/utils/kafka.util');
+
+// Ensure user events topic exists
+ensureTopics(['user_events']);
 
 const registerSchema = Joi.object({
   name: Joi.string().required(),
@@ -19,6 +23,25 @@ exports.registerUser = async (req, res, next) => {
     if (error) return res.status(400).json({ message: error.details[0].message });
 
     const userResponse = await authService.registerUser(req.body);
+    
+    // Emit Kafka event
+    try {
+      const producer = await getProducer();
+      await producer.send({
+        topic: 'user_events',
+        messages: [{
+          value: JSON.stringify({
+            userId: userResponse.user.id,
+            action: 'USER_REGISTERED',
+            email: userResponse.user.email,
+            timestamp: new Date().toISOString()
+          })
+        }]
+      });
+    } catch (kafkaErr) {
+      console.error('[User Service] Failed to emit registration event:', kafkaErr.message);
+    }
+
     res.status(201).json(userResponse);
   } catch (err) {
     if (err.message === 'User already exists') {
@@ -32,6 +55,24 @@ exports.loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const userResponse = await authService.loginUser(email, password);
+
+    // Emit Kafka event
+    try {
+      const producer = await getProducer();
+      await producer.send({
+        topic: 'user_events',
+        messages: [{
+          value: JSON.stringify({
+            userId: userResponse.user.id,
+            action: 'USER_LOGGED_IN',
+            timestamp: new Date().toISOString()
+          })
+        }]
+      });
+    } catch (kafkaErr) {
+      console.error('[User Service] Failed to emit login event:', kafkaErr.message);
+    }
+
     res.json(userResponse);
   } catch (err) {
     if (err.message === 'Invalid email or password') {
